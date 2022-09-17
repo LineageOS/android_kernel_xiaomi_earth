@@ -30,3 +30,4 @@ obj-$(CONFIG_TOUCHSCREEN_FTS) += ft8057/
 # C3T code for chipone_icnl9916 tp bring up by jishen at 2022/09/26 start 
 obj-$(CONFIG_TOUCHSCREEN_CHIPONE) += chipone_ICNL_9916/
 # C3T code for chipone_icnl9916 tp bring up by jishen at 2022/09/26 end
+obj-$(CONFIG_TOUCHSCREEN_COMMON)	+= tp_common.o
