@@ -1,5 +1,6 @@
 config MTK_COMBO
 	tristate "MediaTek Connectivity Combo Chip Support"
+	select BT
 	help
 	  MTK connectivity combo chip driver for MT66xx
 	  This config
@@ -463,4 +464,11 @@ config WLAN_DRV_BUILD_IN
     help
       This will build the wlan driver and the corresponding componenets
       into the kernel.
+      If unsure say n
+
+config MTK_EXTRA_CONN_DRV_BUILD_IN
+    bool "Build connectivity module in kernel"
+    help
+      This will build FM, GPS, BT, connfem driver and the
+      corresponding componenets into the kernel.
       If unsure say n

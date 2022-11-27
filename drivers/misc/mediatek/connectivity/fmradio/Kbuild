@@ -2,6 +2,7 @@
 # Copyright (c) 2021 Mediatek Inc.
 
 CFG_FM_CHIP := mt6631
+CFG_FM_PLAT := $(CFG_FM_CHIP)
 
 ###############################################################################
 # Necessary Check
@@ -51,7 +52,7 @@ $(info [fm_drv:Kbuild] CFG_FM_CHIP_ID = $(CFG_FM_CHIP_ID))
 $(info [fm_drv:Kbuild] CFG_FM_CHIP = $(CFG_FM_CHIP))
 
 MODULE_NAME := fmradio_drv_$(CFG_FM_PLAT)
-ifeq ($(CONFIG_WLAN_DRV_BUILD_IN),y)
+ifeq ($(CONFIG_MTK_EXTRA_CONN_DRV_BUILD_IN),y)
 $(info [fm_drv:Kbuild] $(MODULE_NAME) build-in boot.img)
 obj-y += $(MODULE_NAME).o
 else
