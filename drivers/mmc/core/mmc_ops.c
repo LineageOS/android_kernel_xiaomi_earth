@@ -26,6 +26,10 @@
 #define MMC_OPS_TIMEOUT_MS		(10 * 60 * 1000) /* 10min*/
 #define MMC_BKOPS_TIMEOUT_MS		(120 * 1000) /* 120s */
 #define MMC_CACHE_FLUSH_TIMEOUT_MS	(30 * 1000) /* 30s */
+/* C3T code for HQ-252253 by xukai at 202209/29 start*/
+#define CMD_TIMEOUT         (HZ/10 * 5)	/* 100ms x5 */
+#define DAT_TIMEOUT         (HZ    * 5)	/* 1000ms x5 */
+/* C3T code for HQ-252253 by xukai at 202209/29 end*/
 
 static const u8 tuning_blk_pattern_4bit[] = {
 	0xff, 0x0f, 0xff, 0x00, 0xff, 0xcc, 0xc3, 0xcc,
@@ -458,6 +462,13 @@ int mmc_poll_for_busy(struct mmc_card *card, unsigned int timeout_ms,
 	bool expired = false;
 	bool busy = false;
 
+	/* We have an unspecified cmd timeout, use the fallback value. */
+	if (!timeout_ms)
+		timeout_ms = MMC_OPS_TIMEOUT_MS;
+/* C3T code for HQ-252253 by xukai at 202209/29 start*/
+	else if (timeout_ms < DAT_TIMEOUT)
+		timeout_ms = DAT_TIMEOUT;
+/* C3T code for HQ-252253 by xukai at 202209/29 end*/
 	/*
 	 * In cases when not allowed to poll by using CMD13 or because we aren't
 	 * capable of polling by using ->card_busy(), then rely on waiting the
@@ -545,7 +556,7 @@ int __mmc_switch(struct mmc_card *card, u8 set, u8 index, u8 value,
 	 * which also means they are on their own when it comes to deal with the
 	 * busy timeout.
 	 */
-	if (!(host->caps & MMC_CAP_NEED_RSP_BUSY) &&
+	if (!(host->caps & MMC_CAP_NEED_RSP_BUSY) && timeout_ms &&
 	    host->max_busy_timeout && (timeout_ms > host->max_busy_timeout))
 		use_r1b_resp = false;
 
@@ -557,6 +568,10 @@ int __mmc_switch(struct mmc_card *card, u8 set, u8 index, u8 value,
 	cmd.flags = MMC_CMD_AC;
 	if (use_r1b_resp) {
 		cmd.flags |= MMC_RSP_SPI_R1B | MMC_RSP_R1B;
+		/*
+		 * A busy_timeout of zero means the host can decide to use
+		 * whatever value it finds suitable.
+		 */
 		cmd.busy_timeout = timeout_ms;
 	} else {
 		cmd.flags |= MMC_RSP_SPI_R1 | MMC_RSP_R1;
@@ -580,7 +595,9 @@ int __mmc_switch(struct mmc_card *card, u8 set, u8 index, u8 value,
 
 	/* Let's try to poll to find out when the command is completed. */
 	err = mmc_poll_for_busy(card, timeout_ms, send_status, retry_crc_err);
-	if (err)
+	/* C3T code for HQ-252253 by xukai at 202209/29 start*/
+	if (err && err != -ETIMEDOUT)
+        /* C3T code for HQ-252253 by xukai at 202209/29 end*/
 		goto out;
 
 out_tim:
