@@ -364,7 +364,7 @@ static void gc6133c_hw_off(struct gc6133c *gc6133c)
 	// 	qvga_dev_err(g_gc6133c->dev, "%s: pinctrl select failed for mclk off\n", __func__);
 	// }
 }
-void qvga_i2c4_mclk()
+void qvga_i2c4_mclk(void)
 {
 	int ret;
 	if(qvga_probe == false )
