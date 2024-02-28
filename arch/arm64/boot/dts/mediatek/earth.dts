@@ -310,7 +310,7 @@
 
 /* DISPSYS GPIO standardization end*/
 
-#include <earth/cust.dtsi>
+#include "mediatek/earth/cust.dtsi"
 #include "mediatek/cust_mt6768_camera.dtsi"
 /*#include "mediatek/cust_mt6768_touch_1080x2160.dtsi"*/
 #include "mediatek/cust_mt6768_touch_720x1650.dtsi"
