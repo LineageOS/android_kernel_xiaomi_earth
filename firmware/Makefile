@@ -14,6 +14,8 @@ fw-shipped-$(CONFIG_TOUCHSCREEN_NT36xxx_HOSTDL_SPI) += \
       novatek_ts_truly_fw.bin \
       novatek_ts_truly_mp.bin
 
+fw-shipped-$(CONFIG_TOUCHSCREEN_FTS) += focaltech_ts_fw_djn.bin
+
 fw-shipped-all := $(fw-shipped-y) $(fw-shipped-m) $(fw-shipped-)
 quiet_cmd_ihex  = IHEX    $@
       cmd_ihex  = $(OBJCOPY) -Iihex -Obinary $< $@
