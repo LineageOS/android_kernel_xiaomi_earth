@@ -163,12 +163,6 @@ struct nvt_ts_data {
 	uint8_t *xbuf;
 	struct mutex xbuf_lock;
 	bool irq_enabled;
-	/*C3T code for HQ-218848 by chenzimo at 2022/8/23 start*/
-	#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-	bool palm_sensor_changed;
-	bool palm_sensor_switch;
-	#endif
-	/*C3T code for HQ-218848 by chenzimo at 2022/8/23 end*/
 	/*C3T code for HQ-219167 by chenzimo at 2022/7/28 start*/
 	char lockdowninfo[17];
 	/*C3T code for HQ-219167 by chenzimo at 2022/7/28 end*/

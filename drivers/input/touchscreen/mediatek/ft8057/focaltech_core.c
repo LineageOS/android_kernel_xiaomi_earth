@@ -51,11 +51,6 @@
 #define FTS_SUSPEND_LEVEL 1     /* Early-suspend level */
 #endif
 #include "focaltech_core.h"
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 start*/
-#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-#include "../xiaomi/xiaomi_touch.h"
-#endif
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 end*/
 
 /*****************************************************************************
 * Private constant and macro definitions using #define
@@ -959,15 +954,8 @@ int enter_palm_mode(struct fts_ts_data *data)
 	u8 mode1 = 0;
 	fts_read_reg(0x9A, &mode0);
 	fts_read_reg(0x9B, &mode1);
-	if (0x01 == mode0 && 0x00 == mode1) {
-		#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-		update_palm_sensor_value(0);
-		#endif
-	} else if (0x01 == mode0 && 0x01 == mode1) {
+    if (0x01 == mode0 && 0x01 == mode1) {
 		FTS_INFO("get packet palm on event.\n");
-		#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-		update_palm_sensor_value(1);
-		#endif
 		input_report_key(data->input_dev, 523, 1);
 		input_sync(data->input_dev);
 		input_report_key(data->input_dev, 523, 0);
@@ -2358,17 +2346,6 @@ static int fts_ts_suspend(struct device *dev)
 #endif
 /*C3T code for HQ-219139 by chenzimo at 2022/8/17 end*/
 
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 start*/
-#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-    if (fts_data->palm_sensor_switch) {
-        FTS_INFO("%s: palm sensor on status, switch to off\n", __func__);
-        update_palm_sensor_value(0);
-        fts_palm_sensor_cmd(0);
-        fts_data->palm_sensor_switch = false;
-    }
-#endif
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 end*/
-
     fts_esdcheck_suspend(ts_data);
 
     if (ts_data->gesture_support) {
@@ -2431,17 +2408,6 @@ int fts_ts_tp_suspend(void)
     }
 #endif
 /*C3T code for HQ-219139 by chenzimo at 2022/8/17 end*/
-
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 start*/
-#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-    if (fts_data->palm_sensor_switch) {
-        FTS_INFO("%s: palm sensor on status, switch to off\n", __func__);
-        update_palm_sensor_value(0);
-        fts_palm_sensor_cmd(0);
-        fts_data->palm_sensor_switch = false;
-    }
-#endif
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 end*/
 
     fts_esdcheck_suspend(ts_data);
 
@@ -2533,14 +2499,6 @@ static int fts_ts_resume(struct device *dev)
         fts_gesture_resume(ts_data);
     }
 
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 start*/
-#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-    if (fts_data->palm_sensor_switch) {
-        FTS_INFO("%s: palm sensor off status, switch to on\n", __func__);
-        fts_palm_sensor_cmd(ts_data->palm_sensor_switch);
-    }
-#endif
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 end*/
     FTS_FUNC_EXIT();
     return 0;
 }
@@ -2603,14 +2561,6 @@ int fts_ts_tp_resume(void)
         fts_gesture_resume(ts_data);
     }
 
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 start*/
-#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-    if (fts_data->palm_sensor_switch) {
-        FTS_INFO("%s: palm sensor off status, switch to on\n", __func__);
-        fts_palm_sensor_cmd(ts_data->palm_sensor_switch);
-    }
-#endif
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 end*/
 	FTS_FUNC_EXIT();
 	return 0;
 }
@@ -2644,50 +2594,6 @@ static const struct dev_pm_ops fts_dev_pm_ops = {
 };
 #endif
 
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 start*/
-#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-static struct xiaomi_touch_interface xiaomi_touch_interfaces;
-
-int fts_palm_sensor_cmd(int on)
-{
-    int ret;
-
-    if (on) {
-        ret = fts_write_reg(0x9A, 0x01);
-    } else {
-        ret = fts_write_reg(0x9A, 0x00);
-    }
-
-    if (ret < 0) {
-        FTS_INFO("%s: write anti mis-touch cmd on...ERROR %08X !\n", __func__, ret);
-        return -EINVAL;
-    }
-    FTS_INFO("%s %d\n", __func__, on);
-
-    return 0;
-}
-
-int fts_palm_sensor_write(int value)
-{
-    int ret = 0;
-
-    if (value == 3) {
-        FTS_INFO("%s %d succeed\n", __func__, value);
-        update_palm_sensor_value(3);
-        return 0;
-    } else {
-        value = !!value;
-        fts_data->palm_sensor_switch = value;
-        ret = fts_palm_sensor_cmd(value);
-        if (!ret) {
-            FTS_INFO("%s %d succeed\n", __func__, value);
-        }
-    }
-    return ret;
-}
-#endif
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 end*/
-
 /*****************************************************************************
 * TP Driver
 *****************************************************************************/
@@ -2704,13 +2610,6 @@ static int fts_ts_probe(struct spi_device *spi)
         FTS_ERROR("spi setup fail");
         return ret;
     }
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 start*/
-#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-    memset(&xiaomi_touch_interfaces, 0x00, sizeof(struct xiaomi_touch_interface));
-    xiaomi_touch_interfaces.palm_sensor_write = fts_palm_sensor_write;
-    xiaomitouch_register_modedata(&xiaomi_touch_interfaces);
-#endif
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 end*/
 
     /* malloc memory for global struct variable */
     ts_data = (struct fts_ts_data *)kzalloc(sizeof(*ts_data), GFP_KERNEL);
