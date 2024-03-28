@@ -41,11 +41,6 @@
 #elif defined(CONFIG_HAS_EARLYSUSPEND)
 #include <linux/earlysuspend.h>
 #endif
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 start*/
-#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-#include "../xiaomi/xiaomi_touch.h"
-#endif
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 end*/
 
 #include "nt36xxx.h"
 #if NVT_TOUCH_ESD_PROTECT
@@ -1400,18 +1395,10 @@ int32_t nvt_check_palm(uint8_t input_id, uint8_t *data)
 		ret = palm_state;
 		if (palm_state == PACKET_PALM_ON) {
 			NVT_LOG("get packet palm on event.\n");
-			#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-			update_palm_sensor_value(1);
-			#endif
 			input_report_key(ts->input_dev, 523, 1);
 			input_sync(ts->input_dev);
 			input_report_key(ts->input_dev, 523, 0);
 			input_sync(ts->input_dev);
-		} else if (palm_state == PACKET_PALM_OFF) {
-			NVT_LOG("get packet palm off event.\n");
-			#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-			update_palm_sensor_value(0);
-			#endif
 		} else {
 			// should never go here
 			NVT_ERR("invalid palm state %d!\n", palm_state);
@@ -1806,55 +1793,6 @@ int nvt_gesture_switch(struct input_dev *dev, unsigned int type, unsigned int co
 }
 #endif
 
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 start*/
-#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-static struct xiaomi_touch_interface xiaomi_touch_interfaces;
-extern int32_t nvt_set_pocket_palm_switch(uint8_t pocket_palm_switch);
-
-int nvt_palm_sensor_cmd(int on)
-{
-	int ret;
-
-	if (on) {
-		ret = nvt_set_pocket_palm_switch(1);
-	} else {
-		ret = nvt_set_pocket_palm_switch(0);
-	}
-
-	if (ret < 0) {
-		NVT_LOG("%s: write anti mis-touch cmd on...ERROR %08X !\n", __func__, ret);
-		return -EINVAL;
-	}
-	NVT_LOG("%s %d\n", __func__, on);
-
-	return 0;
-}
-
-int nvt_palm_sensor_write(int value)
-{
-	int ret = 0;
-
-	ts->palm_sensor_switch = value;
-
-	if (!bTouchIsAwake) {
-		ts->palm_sensor_changed = false;
-		return 0;
-	}
-	/*C3T code for HQ-262331 by jishen at 2022/11/6 start*/
-	mutex_lock(&ts->lock);
-	ret = nvt_palm_sensor_cmd(value);
-	mutex_unlock(&ts->lock);
-	/*C3T code for HQ-262331 by jishen at 2022/11/6 end*/
-	if (!ret) {
-		NVT_LOG("%s %d succeed\n", __func__, value);
-		ts->palm_sensor_changed = true;
-	}
-
-	return ret;
-}
-#endif
-/*C3T code for HQ-218848 by chenzimo at 2022/8/23 end*/
-
 static ssize_t nvt_irq_show(
 	struct device *dev, struct device_attribute *attr, char *buf)
 {
@@ -2011,13 +1949,6 @@ static int32_t nvt_ts_probe(struct spi_device *client)
 		ret = -ENOMEM;
 		goto err_malloc_rbuf;
 	}
-	/*C3T code for HQ-218848 by chenzimo at 2022/8/23 start*/
-	#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-	memset(&xiaomi_touch_interfaces, 0x00, sizeof(struct xiaomi_touch_interface));
-	xiaomi_touch_interfaces.palm_sensor_write = nvt_palm_sensor_write;
-	xiaomitouch_register_modedata(&xiaomi_touch_interfaces);
-	#endif
-	/*C3T code for HQ-218848 by chenzimo at 2022/8/23 end*/
 	ts->client = client;
 	spi_set_drvdata(client, ts);
 
@@ -2621,21 +2552,6 @@ static int32_t nvt_ts_suspend(struct device *dev)
 		return 0;
 	}
 
-/*C3T code for HQ-262331 by jishen at 2022/11/6 start*/
-#if 0
-	/*C3T code for HQ-218848 by chenzimo at 2022/8/23 start*/
-	#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-	if (ts->palm_sensor_switch) {
-		NVT_LOG("%s: palm sensor on status, switch to off\n", __func__);
-		update_palm_sensor_value(0);
-		nvt_palm_sensor_cmd(0);
-		ts->palm_sensor_switch = false;
-		}
-	#endif
-	/*C3T code for HQ-218848 by chenzimo at 2022/8/23 end*/
-#endif
-/*C3T code for HQ-262331 by jishen at 2022/11/6 end*/
-
 #if WAKEUP_GESTURE
 	if (nvt_gesture_flag == false)
 		nvt_irq_enable(false);
@@ -2650,16 +2566,6 @@ static int32_t nvt_ts_suspend(struct device *dev)
 #endif /* #if NVT_TOUCH_ESD_PROTECT */
 
 	mutex_lock(&ts->lock);
-	/*C3T code for HQ-262331 by jishen at 2022/11/6 start*/
-	#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-	if (ts->palm_sensor_switch) {
-		NVT_LOG("%s: palm sensor on status, switch to off\n", __func__);
-		update_palm_sensor_value(0);
-		nvt_palm_sensor_cmd(0);
-		ts->palm_sensor_switch = false;
-		}
-	#endif
-	/*C3T code for HQ-262331 by jishen at 2022/11/6 end*/
 	NVT_LOG("start\n");
 
 	bTouchIsAwake = 0;
@@ -2782,16 +2688,6 @@ static int32_t nvt_ts_resume(struct device *dev)
 	//mutex_unlock(&ts->lock);
 	/*C3T code for HQ-262331 by jishen at 2022/11/6 end*/
 
-	/*C3T code for HQ-218848 by chenzimo at 2022/8/23 start*/
-	#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-	if (ts->palm_sensor_switch) {
-		NVT_LOG("%s: palm sensor on status, switch to off\n", __func__);
-		update_palm_sensor_value(0);
-		nvt_palm_sensor_cmd(0);
-		ts->palm_sensor_switch = false;
-		}
-	#endif
-	/*C3T code for HQ-218848 by chenzimo at 2022/8/23 end*/
 /*C3T code for HQ-218218 by chenzimo at 2022/8/09 start*/
 	if(proximity_event){
 		nvt_set_proximity_switch(1);
