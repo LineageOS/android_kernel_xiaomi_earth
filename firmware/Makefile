@@ -16,6 +16,10 @@ fw-shipped-$(CONFIG_TOUCHSCREEN_NT36xxx_HOSTDL_SPI) += \
 
 fw-shipped-$(CONFIG_TOUCHSCREEN_FTS) += focaltech_ts_fw_djn.bin
 
+fw-shipped-$(CONFIG_TOUCHSCREEN_CHIPONE) += \
+      ICNL9916.bin \
+      ICNL9916_0D.bin
+
 fw-shipped-all := $(fw-shipped-y) $(fw-shipped-m) $(fw-shipped-)
 quiet_cmd_ihex  = IHEX    $@
       cmd_ihex  = $(OBJCOPY) -Iihex -Obinary $< $@
