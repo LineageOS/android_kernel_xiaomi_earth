@@ -9,6 +9,10 @@
 #include "cts_firmware.h"
 #include "cts_strerror.h"
 
+#if IS_ENABLED(CONFIG_TOUCHSCREEN_COMMON)
+#include <linux/input/tp_common.h>
+#endif
+
 #ifdef CONFIG_CTS_SYSFS
 
 #define SPLIT_LINE_STR \
@@ -34,6 +38,8 @@ char *argv[MAX_ARG_NUM];
 static int jitter_test_frame = 10;
 static s16 *manualdiff_base;
 static int manualdiff_base_updated;
+
+static struct cts_device *g_cts_dev;
 
 int parse_arg(const char *buf, size_t count)
 {
@@ -2578,47 +2584,42 @@ static ssize_t debug_spi_store(struct device *dev,
 static DEVICE_ATTR(debug_spi, S_IRUSR | S_IWUSR, debug_spi_show,
 		   debug_spi_store);
 
-#ifdef CFG_CTS_GESTURE
-static ssize_t gesture_en_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
+#if defined(CFG_CTS_GESTURE) && IS_ENABLED(CONFIG_TOUCHSCREEN_COMMON)
+static ssize_t double_tap_show(struct kobject *kobj,
+                               struct kobj_attribute *attr, char *buf)
 {
-	struct chipone_ts_data *cts_data = dev_get_drvdata(dev);
-	struct cts_device *cts_dev = &cts_data->cts_dev;
-
-	return sprintf(buf, "Gesture wakup is %s\n",
-		       cts_is_gesture_wakeup_enabled(cts_dev) ? "enable" :
-		       "disable");
+	return sprintf(buf, "%d\n", cts_is_gesture_wakeup_enabled(g_cts_dev));
 }
 
-static ssize_t gesture_en_store(struct device *dev,
-				struct device_attribute *attr, const char *buf,
-				size_t count)
+static ssize_t double_tap_store(struct kobject *kobj,
+                                struct kobj_attribute *attr, const char *buf,
+                                size_t count)
 {
-	struct chipone_ts_data *cts_data = dev_get_drvdata(dev);
-	struct cts_device *cts_dev = &cts_data->cts_dev;
-	u8 enable = 0;
+	int rc, val;
+	rc = kstrtoint(buf, 10, &val);
+	if (rc)
+		return -EINVAL;
 
-	if (buf[0] == 'Y' || buf[0] == 'y' || buf[0] == '1')
-		enable = 1;
 	/*C3T code for HQ-229322 by jishen at 2022/10/12  start*/	
-	if (enable){
-
-		cts_enable_gesture_wakeup(cts_dev);
+	if (!!val){
+		cts_enable_gesture_wakeup(g_cts_dev);
 		cts_gesture_flag = true;
 		cts_info("cts_gesture_flag : %d\n",cts_gesture_flag);			
 	}
 	else{
-		cts_disable_gesture_wakeup(cts_dev);
+		cts_disable_gesture_wakeup(g_cts_dev);
 		cts_gesture_flag = false;
-		cts_info("cts_gesture_flag : %d\n",cts_gesture_flag);
-		
+		cts_info("cts_gesture_flag : %d\n",cts_gesture_flag);	
 	}
 	/*C3T code for HQ-229322 by jishen at 2022/10/12  end*/	
+
 	return count;
 }
 
-static DEVICE_ATTR(gesture_en, S_IRUSR | S_IWUSR, gesture_en_show,
-		   gesture_en_store);
+static struct tp_common_ops double_tap_ops = {
+    .show = double_tap_show,
+    .store = double_tap_store,
+};
 #endif
 
 static ssize_t int_data_types_show(struct device *dev,
@@ -3229,9 +3230,6 @@ static struct attribute *cts_dev_misc_atts[] = {
 	&dev_attr_read_hw_reg.attr,
 	&dev_attr_write_hw_reg.attr,
 	&dev_attr_debug_spi.attr,
-#ifdef CFG_CTS_GESTURE
-	&dev_attr_gesture_en.attr,
-#endif /* CFG_CTS_GESTURE */
 	&dev_attr_int_data_types.attr,
 	&dev_attr_int_data_method.attr,
 #ifdef CFG_DUMP_INT_DATA
@@ -3519,6 +3517,8 @@ int cts_sysfs_add_device(struct device *dev)
 	struct cts_device *cts_dev = &cts_data->cts_dev;
 	int ret, i;
 
+	g_cts_dev = cts_dev;
+
 	cts_info("Add device attr groups");
 
 	/*Low version kernel NOT support sysfs_create_groups() */
@@ -3566,6 +3566,14 @@ int cts_sysfs_add_device(struct device *dev)
 		cts_err("Create touchscreen class failed. ret=%d\n", ret);
 		return ret;
 	}
+
+#if IS_ENABLED(CONFIG_TOUCHSCREEN_COMMON)
+    ret = tp_common_set_double_tap_ops(&double_tap_ops);
+    if (ret < 0) {
+        cts_err("Failed to create double_tap node err=%d\n", ret);
+		return ret;
+    }
+#endif
 
 	return 0;
 }
