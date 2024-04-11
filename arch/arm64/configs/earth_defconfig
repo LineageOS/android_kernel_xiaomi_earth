@@ -499,4 +499,4 @@ CONFIG_EROFS_FS=y
 # C3T code for HQ-223831 by wangmingyu at 2022/09/09 start
 CONFIG_DEBUG_POLICY=y
 # C3T code for HQ-223831 by wangmingyu at 2022/09/09 end
-
+CONFIG_MTK_SYSTRACKER_V2=n
