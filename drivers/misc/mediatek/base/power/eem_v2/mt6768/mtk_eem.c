@@ -349,6 +349,7 @@ static int get_devinfo(void)
 	 * One-line
 	 */
 
+#ifdef CONFIG_MTK_AEE_FEATURE
 	/* CCI */
 	aee_rr_rec_ptp_devinfo_3((unsigned int) pi_efuse_idx[0].orig_mdes_bdes);
 	aee_rr_rec_ptp_devinfo_4((unsigned int) pi_efuse_idx[0].orig_mtdes);
@@ -361,6 +362,7 @@ static int get_devinfo(void)
 
 	/* Big: MDES and BDES */
 	aee_rr_rec_ptp_devinfo_7((unsigned int) pi_efuse_idx[2].orig_mdes_bdes);
+#endif
 
 	/*
 	 * Two-line
