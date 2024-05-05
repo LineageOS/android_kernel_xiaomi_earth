@@ -6,9 +6,7 @@
 #include "regulator.h"
 //#include "upmu_common.h"
 
-#ifndef NO_OC
 #include <mt-plat/aee.h>
-#endif
 
 #include <linux/rcupdate.h>
 #include <linux/sched.h>

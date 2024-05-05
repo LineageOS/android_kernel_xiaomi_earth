@@ -7,9 +7,7 @@
 /*#include "upmu_common.h"*/
 
 
-#ifndef NO_OC
 #include <mt-plat/aee.h>
-#endif
 
 #include <asm/siginfo.h>
 #include <linux/rcupdate.h>
