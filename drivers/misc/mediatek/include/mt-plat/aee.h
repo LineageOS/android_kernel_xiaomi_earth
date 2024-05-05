@@ -153,6 +153,7 @@ extern char *mtk8250_uart_dump(void);
 #define AEE_API_CALL_INTERVAL   (120 * HZ)
 #define AEE_API_CALL_BURST      2
 
+#if IS_ENABLED(CONFIG_MTK_AEE_FEATURE)
 #if defined(MODULE) || IS_BUILTIN(CONFIG_MTK_AEE_AED)
 #define aee_kernel_exception(module, msg...)		\
 ({							\
@@ -197,26 +198,10 @@ extern char *mtk8250_uart_dump(void);
 		aee_kernel_warning_api_func(__FILE__, __LINE__, db_opt,	\
 				module, msg);				\
 })
-#else
-#undef aee_kernel_warning
-#define aee_kernel_warning(module, msg...) WARN(1, msg)
-
-#undef aee_kernel_warning_api
-#define aee_kernel_warning_api(file, line, db_opt, module, msg...) \
-	WARN(1, msg)
-
-#undef aee_kernel_exception
-#define aee_kernel_exception(module, msg...) WARN(1, msg)
-
-#undef aee_kernel_exception_api
-#define aee_kernel_exception_api(file, line, db_opt, module, msg...) \
-	WARN(1, msg)
-#endif
 
 #define aee_kernel_reminding(module, msg...)	\
 	aee_kernel_reminding_api(__FILE__, __LINE__, DB_OPT_DEFAULT,	\
 			module, msg)
-
 #define aed_md_exception(log, log_size, phy, phy_size, detail)	\
 	aed_md_exception_api(log, log_size, phy, phy_size, detail,	\
 			DB_OPT_DEFAULT)
@@ -257,4 +242,25 @@ int aed_get_status(void);
 int aee_is_printk_too_much(const char *module);
 void aee_sram_printk(const char *fmt, ...);
 int aee_is_enable(void);
+#endif /* defined(MODULE) || IS_BUILTIN(CONFIG_MTK_AEE_AED) */
+#else /* CONFIG_MTK_AEE_FEATURE */
+#undef aee_kernel_warning
+#define aee_kernel_warning(module, msg...) WARN(1, msg)
+
+#undef aee_kernel_warning_api
+#define aee_kernel_warning_api(file, line, db_opt, module, msg...) \
+	WARN(1, msg)
+
+#undef aee_kernel_exception
+#define aee_kernel_exception(module, msg...) WARN(1, msg)
+
+#undef aee_kernel_exception_api
+#define aee_kernel_exception_api(file, line, db_opt, module, msg...) \
+	WARN(1, msg)
+
+static inline int aed_get_status(void) { return 0; }
+static inline int aee_is_printk_too_much(const char *module) { return 0; }
+static inline void aee_sram_printk(const char *fmt, ...) { }
+static inline int aee_is_enable(void) { return 0; }
+#endif
 #endif/* __AEE_H__ */
