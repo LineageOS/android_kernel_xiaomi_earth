@@ -16,6 +16,7 @@
 #include <linux/sched/clock.h>
 #include <linux/soc/mediatek/pmic_wrap.h>
 #include <linux/kprobes.h>
+#include <mt-plat/aee.h>
 #include <asm/traps.h>
 
 #define PWRAP_MT8135_BRIDGE_IORD_ARB_EN		0x4
