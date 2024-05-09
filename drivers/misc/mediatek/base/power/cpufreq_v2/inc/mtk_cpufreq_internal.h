@@ -47,10 +47,6 @@
 #define MAX(a, b) ((a) >= (b) ? (a) : (b))
 #define MIN(a, b) ((a) >= (b) ? (b) : (a))
 
-#if !IS_ENABLED(CONFIG_MTK_CPU_CTRL)
-extern void (*cpufreq_notifier_fp)(int cid, unsigned long freq);
-#endif
-
 /*
  * LOCK
  */
