@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c0844bb6_f8fade34",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 34512
+      },
+      "writtenOn": "2025-10-05T20:08:12Z",
+      "side": 1,
+      "message": "drop CONFIG_LSM line, auto-gen works when there is no \"apparmor\" typo",
+      "revId": "819f8f2131246010dc5775745284cfb5f7bc588c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
