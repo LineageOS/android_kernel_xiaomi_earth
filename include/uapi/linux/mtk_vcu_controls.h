@@ -190,6 +190,7 @@ enum gce_event_id {
 #define VCU_SET_MMAP_TYPE	_IOW('v', 13, struct map_obj)
 
 #define COMPAT_VCU_SET_OBJECT		_IOW('v', 0, struct share_obj)
+#define COMPAT_VCU_GET_LOG_OBJECT	_IOW('v', 11, char[LOG_INFO_SIZE])
 #define COMPAT_VCU_MVA_ALLOCATION	_IOWR('v', 1, struct compat_mem_obj)
 #define COMPAT_VCU_MVA_FREE		_IOWR('v', 2, struct compat_mem_obj)
 #define COMPAT_VCU_CACHE_FLUSH_ALL	_IOWR('v', 3, struct compat_mem_obj)

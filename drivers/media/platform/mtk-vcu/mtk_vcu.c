@@ -526,7 +526,8 @@ static int vcu_ipi_get(struct mtk_vcu *vcu, unsigned long arg)
 	return ret;
 }
 
-static int vcu_log_get(struct mtk_vcu *vcu, unsigned long arg)
+static int vcu_log_get(struct mtk_vcu *vcu, unsigned long arg,
+		       bool legacy_abi)
 {
 	int ret;
 	unsigned char *user_data_addr = NULL;
@@ -541,8 +542,12 @@ static int vcu_log_get(struct mtk_vcu *vcu, unsigned long arg)
 		return ret;
 	}
 
-	ret = copy_to_user(user_data_addr, vcu->vdec_log_info,
-			   (unsigned long)sizeof(struct log_test_nofuse));
+	if (legacy_abi)
+		ret = copy_to_user(user_data_addr,
+				   vcu->vdec_log_info->log_info, LOG_INFO_SIZE);
+	else
+		ret = copy_to_user(user_data_addr, vcu->vdec_log_info,
+				   (unsigned long)sizeof(struct log_test_nofuse));
 	if (ret != 0) {
 		pr_info("[VCU] %s(%d) Copy data to user failed!\n",
 			__func__, __LINE__);
@@ -1904,7 +1909,7 @@ static long mtk_vcu_unlocked_ioctl(struct file *file, unsigned int cmd,
 		ret = vcu_ipi_get(vcu_dev, arg);
 		break;
 	case VCU_GET_LOG_OBJECT:
-		ret = vcu_log_get(vcu_dev, arg);
+		ret = vcu_log_get(vcu_dev, arg, false);
 		break;
 #if !IS_ENABLED(CONFIG_VIDEO_MEDIATEK_VCODEC_LEGACY)
 	case VCU_SET_LOG_OBJECT:
@@ -2103,6 +2108,7 @@ static long mtk_vcu_unlocked_compat_ioctl(struct file *file, unsigned int cmd,
 	struct share_obj __user *share_data32;
 	struct compat_mem_obj __user *data32;
 	struct mem_obj __user *data;
+	struct mtk_vcu_queue *vcu_queue;
 
 	switch (cmd) {
 	case COMPAT_VCU_SET_OBJECT:
@@ -2117,6 +2123,14 @@ static long mtk_vcu_unlocked_compat_ioctl(struct file *file, unsigned int cmd,
 		ret = file->f_op->unlocked_ioctl(file,
 			cmd, (unsigned long)share_data32);
 		break;
+#if !IS_ENABLED(CONFIG_VIDEO_MEDIATEK_VCODEC_LEGACY)
+	case COMPAT_VCU_GET_LOG_OBJECT:
+		vcu_queue = (struct mtk_vcu_queue *)file->private_data;
+		share_data32 = compat_ptr((uint32_t)arg);
+		ret = vcu_log_get((struct mtk_vcu *)vcu_queue->vcu,
+				  (unsigned long)share_data32, true);
+		break;
+#endif
 	case COMPAT_VCU_MVA_ALLOCATION:
 	case COMPAT_VCU_PA_ALLOCATION:
 		data32 = compat_ptr((uint32_t)arg);
