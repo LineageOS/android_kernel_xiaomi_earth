@@ -71,20 +71,6 @@ const struct flashlight_device_id flashlight_id[] = {
 	{0, 0, 0, "flashlights-mt6370", 0, 0},
 	{0, 1, 0, "flashlights-mt6370", 1, 0},
 };
-#elif defined(mt6768)
-	#if defined(CONFIG_MTK_FLASHLIGHT_OCP81375)
-	const struct flashlight_device_id flashlight_id[] = {
-		/* {TYPE, CT, PART, "NAME", CHANNEL, DECOUPLE} */
-		{0, 0, 0, "flashlights-ocp81375", 1, 1},
-		// {1, 0, 0, "flashlights-ocp81375", 0, 1},
-	};
-	#else
-	const struct flashlight_device_id flashlight_id[] = {
-		/* {TYPE, CT, PART, "NAME", CHANNEL, DECOUPLE} */
-		{0, 0, 0, "flashlights-mt6370", 0, 0},
-		{0, 1, 0, "flashlights-mt6370", 1, 0},
-	};
-	#endif
 #elif defined(mt6799)
 const struct flashlight_device_id flashlight_id[] = {
 	/* {TYPE, CT, PART, "NAME", CHANNEL, DECOUPLE} */
